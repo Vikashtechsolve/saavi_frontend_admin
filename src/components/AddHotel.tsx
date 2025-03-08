@@ -16,9 +16,10 @@ interface HotelType {
 
 interface AddHotelProps {
   onClose: () => void;
+  onComplete?: () => Promise<void> | void;
 }
 
-const AddHotel: React.FC<AddHotelProps> = ({ onClose }) => {
+const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
   const [formData, setFormData] = useState<HotelType>({
     name: '',
     city: '',
@@ -100,8 +101,9 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose }) => {
       formDataToSend.append('hotelId', uniqueHotelId);
       
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'facilities') {
-          formDataToSend.append(key, JSON.stringify(value));
+        if (key === 'facilities' && Array.isArray(value)) {
+          // Explicitly handle facilities array
+          formDataToSend.append('facilities', JSON.stringify(value));
         } else {
           formDataToSend.append(key, value.toString());
         }
@@ -122,6 +124,9 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose }) => {
       }
 
       onClose();
+      if (onComplete) {
+        onComplete();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add hotel');
     } finally {

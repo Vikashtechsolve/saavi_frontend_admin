@@ -1,20 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import AddHotel from './AddHotel';
+import EditHotel from './EditHotel';  
+import QuickPriceEdit from './QuickPriceEdit';
 
 const HotelList = () => {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [hotels, setHotels] = useState([
-    {
-      id: 1,
-      name: 'Grand Hotel',
-      location: 'New York',
-      pricePerNight: 299,
-      suites: 50,
-      rating: 4.5,
-    },
-    // Add more sample hotels here
-  ]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchHotels();
+  }, []);
+
+  const fetchHotels = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch hotels');
+      }
+      const data = await response.json();
+      setHotels(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (hotel: any) => {
+    setSelectedHotel(hotel);
+    setShowEditModal(true);
+  };
+
+  const handleEditComplete = () => {
+    setShowEditModal(false);
+    setSelectedHotel(null);
+    fetchHotels(); // Refresh the list after edit
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading hotels...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-600">{error}</div>;
+  }
 
   return (
     <div>
@@ -46,24 +80,31 @@ const HotelList = () => {
                 Suites
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Rating
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {hotels.map((hotel) => (
-              <tr key={hotel.id}>
+            {hotels.map((hotel: any) => (
+              <tr key={hotel.hotelId || hotel._id || `hotel-${Math.random()}`}>
                 <td className="px-6 py-4 whitespace-nowrap">{hotel.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{hotel.location}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${hotel.pricePerNight}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{hotel.suites}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{hotel.rating}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{hotel.city}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <QuickPriceEdit
+                      hotelId={hotel._id}
+                      currentPrice={hotel.pricePerNight}
+                      onComplete={fetchHotels}
+                    />
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">{hotel.type}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800">
+                    <button 
+                      className="text-blue-600 hover:text-blue-800"
+                      onClick={() => handleEdit(hotel)}
+                    >
                       <Pencil className="h-5 w-5" />
                     </button>
                     <button className="text-red-600 hover:text-red-800">
@@ -77,7 +118,14 @@ const HotelList = () => {
         </table>
       </div>
 
-      {showAddModal && <AddHotel onClose={() => setShowAddModal(false)} />}
+      {showAddModal && <AddHotel onClose={() => setShowAddModal(false)} onComplete={fetchHotels} />}
+      {showEditModal && (
+        <EditHotel 
+          hotel={selectedHotel} 
+          onClose={() => setShowEditModal(false)}
+          onComplete={handleEditComplete}
+        />
+      )}
     </div>
   );
 };
