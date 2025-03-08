@@ -87,6 +87,18 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose }) => {
 
     try {
       const formDataToSend = new FormData();
+      
+      // Generate a unique hotelId using timestamp + random string
+      const timestamp = new Date().getTime().toString(36);
+      const randomPart = Array(8)
+        .fill(0)
+        .map(() => Math.random().toString(36).substring(2, 3))
+        .join('');
+      const uniqueHotelId = `${timestamp}-${randomPart}`;
+      
+      // Add hotelId to formData
+      formDataToSend.append('hotelId', uniqueHotelId);
+      
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'facilities') {
           formDataToSend.append(key, JSON.stringify(value));
@@ -99,14 +111,14 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose }) => {
         formDataToSend.append('imageFiles', file);
       });
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/add-hotel`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/my-hotels/add-hotel`, {
         method: 'POST',
         body: formDataToSend,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add hote<AddHotel onClose={() => setShowAddHotel(false)} />l');
+        throw new Error(errorData.message || 'Failed to add hotel');
       }
 
       onClose();
