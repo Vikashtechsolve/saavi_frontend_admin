@@ -56,7 +56,7 @@ const HotelList = () => {
         <h1 className="text-2xl font-bold text-gray-900">Hotels Management</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700"
+          className="bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-red-900"
         >
           <Plus className="h-5 w-5" />
           <span>Add Hotel</span>

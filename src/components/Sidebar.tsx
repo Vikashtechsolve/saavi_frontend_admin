@@ -16,7 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeTab, setActiveTab }
     <div className="w-64 bg-white shadow-lg">
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <Building className="h-8 w-8 text-blue-600" />
+          <Building className="h-8 w-8 text-red-700" />
           <span className="text-xl font-bold">Hotel Admin</span>
         </div>
       </div>

@@ -281,7 +281,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-300"
             >
               {isSubmitting ? 'Adding...' : 'Add Hotel'}
             </button>
