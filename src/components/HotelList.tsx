@@ -7,7 +7,7 @@ import QuickPriceEdit from './QuickPriceEdit';
 const HotelList = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [selectedHotel, setSelectedHotel] = useState<HotelType | null>(null);
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +119,7 @@ const HotelList = () => {
       </div>
 
       {showAddModal && <AddHotel onClose={() => setShowAddModal(false)} onComplete={fetchHotels} />}
-      {showEditModal && (
+      {showEditModal && selectedHotel && (
         <EditHotel 
           hotel={selectedHotel} 
           onClose={() => setShowEditModal(false)}
