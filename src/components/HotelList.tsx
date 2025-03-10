@@ -40,6 +40,44 @@ const HotelList = () => {
     setShowEditModal(true);
   };
 
+  const handleDelete = async(hotel: any) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${hotel.id}`, {
+        method: 'DELETE',
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete hotel');
+      }
+      
+      // setHotels(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/`, {
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch hotels');
+      }
+      const data = await response.json();
+      setHotels(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEditComplete = () => {
     setShowEditModal(false);
     setSelectedHotel(null);
@@ -111,7 +149,8 @@ const HotelList = () => {
                     >
                       <Pencil className="h-5 w-5" />
                     </button>
-                    <button className="text-red-600 hover:text-red-800">
+                    <button className="text-red-600 hover:text-red-800"
+                    onClick={() => handleDelete(hotel)}>
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
