@@ -25,6 +25,9 @@ const QuickPriceEdit: React.FC<QuickPriceEditProps> = ({ hotelId, currentPrice, 
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/my-hotels/update-hotel/${hotelId}`, {
         method: 'PUT',
         body: formData,
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
       });
 
       if (!response.ok) {
@@ -43,7 +46,7 @@ const QuickPriceEdit: React.FC<QuickPriceEditProps> = ({ hotelId, currentPrice, 
   if (!isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <span>${currentPrice}</span>
+        <span>Rs. {currentPrice}</span>
         <button
           onClick={() => setIsEditing(true)}
           className="p-1 hover:bg-gray-100 rounded"

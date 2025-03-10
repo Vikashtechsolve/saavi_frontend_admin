@@ -113,7 +113,10 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
         formDataToSend.append('imageFiles', file);
       });
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/my-hotels/add-hotel`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/add-hotel`, {
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
         method: 'POST',
         body: formDataToSend,
       });

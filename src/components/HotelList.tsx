@@ -18,7 +18,11 @@ const HotelList = () => {
 
   const fetchHotels = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/`);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/`, {
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch hotels');
       }

@@ -50,7 +50,7 @@ const EditHotel: React.FC<EditHotelProps> = ({ hotel, onClose, onComplete }) => 
       const formDataToSend = new FormData();
       
       // Append all hotel fields individually
-      formDataToSend.append('hotelId', formData.hotelId);
+      formDataToSend.append('id', formData.id);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('city', formData.city);
       formDataToSend.append('country', formData.country);
@@ -68,9 +68,12 @@ const EditHotel: React.FC<EditHotelProps> = ({ hotel, onClose, onComplete }) => 
         formDataToSend.append('images', file);
       });
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/my-hotels/update-hotel/${hotel.hotelId}`, { 
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/update-hotel/${hotel.id}`, { 
         method: 'PUT',
         body: formDataToSend,
+        headers: {
+          'ngrok-skip-browser-warning': '6941',
+        },
       });
 
       if (!response.ok) {
@@ -80,6 +83,8 @@ const EditHotel: React.FC<EditHotelProps> = ({ hotel, onClose, onComplete }) => 
       onClose();
       onComplete();
     } catch (err) {
+      console.log(err);
+      
       setError(err instanceof Error ? err.message : 'Failed to update hotel');
     } finally {
       setIsSubmitting(false);
