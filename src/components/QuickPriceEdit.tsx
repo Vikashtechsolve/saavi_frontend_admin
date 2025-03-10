@@ -22,7 +22,7 @@ const QuickPriceEdit: React.FC<QuickPriceEditProps> = ({ hotelId, currentPrice, 
       formData.append('hotelId', hotelId);
       formData.append('pricePerNight', price.toString());
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/my-hotels/update-hotel/${hotelId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/update-hotel/${hotelId}`, {
         method: 'PUT',
         body: formData,
         headers: {

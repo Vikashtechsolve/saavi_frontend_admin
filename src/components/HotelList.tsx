@@ -134,7 +134,7 @@ const HotelList = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <QuickPriceEdit
-                      hotelId={hotel._id}
+                      hotelId={hotel.id}
                       currentPrice={hotel.pricePerNight}
                       onComplete={fetchHotels}
                     />
