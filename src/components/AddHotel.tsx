@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from "react";
+import { X } from "lucide-react";
+import Select from "react-select";
+import CustomRichTextEditor from "./CustomRichTextEditor";
 
 interface HotelType {
   name: string;
   city: string;
+  state: string;
   country: string;
+  location: string;
   description: string;
-  type: string;
+  type: string[];
   pricePerNight: number;
   facilities: string[];
-  imageUrls: string[];
+  imageFiles: File[];
   lastUpdated?: Date;
   userId?: string;
+  address?: string;
+  rating?: string;
+  homeDescription?: string;
+  homeImageUrl?: any;
 }
 
 interface AddHotelProps {
@@ -21,109 +29,135 @@ interface AddHotelProps {
 
 const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
   const [formData, setFormData] = useState<HotelType>({
-    name: '',
-    city: '',
-    country: '',
-    description: '',
-    type: 'luxury',
+    name: "",
+    city: "",
+    state: "",
+    country: "",
+    location: "",
+    description: "",
+    type: [],
     pricePerNight: 0,
     facilities: [],
-    imageUrls: [],
+    imageFiles: [],
+    address: "",
+    rating: "",
+    homeDescription: "",
+    homeImageUrl: null,
   });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [facilityInput, setFacilityInput] = useState("");
+  const [facilityOptions, setFacilityOptions] = useState<string[]>([
+    "Free WiFi",
+    "Parking",
+    "Swimming Pool",
+    "Gym",
+    "Restaurant",
+    "Room Service",
+    "Spa",
+    "Business Center",
+    "Conference Room",
+    "Bar/Lounge",
+  ]);
 
-  const facilityOptions = [
-    'Free WiFi',
-    'Parking',
-    'Swimming Pool',
-    'Gym',
-    'Restaurant',
-    'Room Service',
-    'Spa',
-    'Business Center',
-    'Conference Room',
-    'Bar/Lounge'
+  const suiteTypeOptions = [
+    { value: "luxury", label: "Luxury" },
+    { value: "business", label: "Business" },
+    { value: "resort", label: "Resort" },
+    { value: "boutique", label: "Boutique" },
   ];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + imageFiles.length > 6) {
-      setError('Maximum 6 images allowed');
+      setError("Maximum 6 images allowed");
       return;
     }
-    
-    setImageFiles(prev => [...prev, ...files]);
-    
-    files.forEach(file => {
+
+    setImageFiles((prev) => [...prev, ...files]);
+
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result as string]);
+        setImagePreviews((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
+    setFormData((prev) => ({
+      ...prev,
+      imageFiles: [...prev.imageFiles, ...files],
+    }));
   };
 
   const removeImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleFacilityChange = (facility: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       facilities: prev.facilities.includes(facility)
-        ? prev.facilities.filter(f => f !== facility)
-        : [...prev.facilities, facility]
+        ? prev.facilities.filter((f) => f !== facility)
+        : [...prev.facilities, facility],
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Generate a unique hotelId using timestamp + random string
       const timestamp = new Date().getTime().toString(36);
       const randomPart = Array(8)
         .fill(0)
         .map(() => Math.random().toString(36).substring(2, 3))
-        .join('');
+        .join("");
       const uniqueHotelId = `${timestamp}-${randomPart}`;
-      
+
       // Add hotelId to formData
-      formDataToSend.append('hotelId', uniqueHotelId);
-      
+      formDataToSend.append("hotelId", uniqueHotelId);
+
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'facilities' && Array.isArray(value)) {
-          // Explicitly handle facilities array
-          formDataToSend.append('facilities', JSON.stringify(value));
+        if ((key === "facilities" || key === "type")) {
+          // Handle arrays properly
+          formDataToSend.append(key, JSON.stringify(value));
         } else {
-          formDataToSend.append(key, value.toString());
+          if (key === "homeImageUrl") {
+            formDataToSend.append(key, value);
+          } else {
+            formDataToSend.append(key, value.toString());
+          }
         }
       });
 
-      imageFiles.forEach(file => {
-        formDataToSend.append('imageFiles', file);
+      imageFiles.forEach((file) => {
+        formDataToSend.append("imageFiles", file);
       });
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/add-hotel`, {
-        headers: {
-          'ngrok-skip-browser-warning': '6941',
-        },
-        method: 'POST',
-        body: formDataToSend,
-      });
+      console.log(formDataToSend);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/hotels/add-hotel`,
+        {
+          headers: {
+            "ngrok-skip-browser-warning": "6941",
+          },
+          method: "POST",
+          body: formDataToSend,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add hotel');
+        throw new Error(errorData.message || "Failed to add hotel");
       }
 
       onClose();
@@ -131,18 +165,21 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
         onComplete();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add hotel');
+      setError(err instanceof Error ? err.message : "Failed to add hotel");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center overflow-y-auto">
-      <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ">
+      <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 max-h-[700px] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Add New Hotel</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -153,69 +190,187 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hotel Name *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hotel Name *
+            </label>
             <input
               type="text"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">City *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Address *
+              </label>
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700">Country *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                City *
+              </label>
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.city}
+                onChange={(e) =>
+                  setFormData({ ...formData, city: e.target.value })
+                }
               />
+            </div>
+            {/* state */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                State *
+              </label>
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.state}
+                onChange={(e) =>
+                  setFormData({ ...formData, state: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Country *
+              </label>
+              <input
+                type="text"
+                required
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.country}
+                onChange={(e) =>
+                  setFormData({ ...formData, country: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Location *
+              </label>
+              <input
+                type="url"
+                required
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+              />
+            </div>
+            {/* RATING */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Rating *
+              </label>
+              <input
+                type="text"
+                required
+                min={0}
+                max={5}
+                className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={formData.rating}
+                onChange={(e) =>
+                  setFormData({ ...formData, rating: e.target.value })
+                }
+              />
+              <span className="text-sm text-gray-700">(0-5)</span>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Type *</label>
-            <select
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            >
-              <option value="luxury">Luxury</option>
-              <option value="business">Business</option>
-              <option value="resort">Resort</option>
-              <option value="boutique">Boutique</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700">
+              Home Description *
+            </label>
+            <CustomRichTextEditor
+              value={formData.homeDescription || ""}
+              onChange={(value) =>
+                setFormData({ ...formData, homeDescription: value })
+              }
+            />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700">Price per Night (₹) *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Home Image *
+            </label>
             <input
-              type="number"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setFormData({
+                    ...formData,
+                    homeImageUrl: file,
+                  });
+                }
+              }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Suite Types *
+            </label>
+            <Select
+              isMulti
               required
-              min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              value={formData.pricePerNight || ''}
-              onChange={(e) => setFormData({ ...formData, pricePerNight: Number(e.target.value) })}
+              name="types"
+              options={suiteTypeOptions}
+              className="mt-1"
+              classNamePrefix="select"
+              value={suiteTypeOptions.filter((option) =>
+                formData.type.includes(option.value)
+              )}
+              onChange={(selectedOptions) => {
+                const selectedTypes = selectedOptions
+                  ? selectedOptions.map((option) => option.value)
+                  : [];
+                setFormData({ ...formData, type: selectedTypes });
+              }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Facilities *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Price per Night (₹) *
+            </label>
+            <input
+              type="number"
+              required
+              min="0"
+              className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+              value={formData.pricePerNight || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  pricePerNight: Number(e.target.value),
+                })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Facilities *
+            </label>
             <div className="grid grid-cols-2 gap-2">
               {facilityOptions.map((facility) => (
                 <label key={facility} className="flex items-center space-x-2">
@@ -229,22 +384,42 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
                 </label>
               ))}
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={facilityInput}
+                onChange={(e) => setFacilityInput(e.target.value)}
+                placeholder="Enter facility"
+                className="mt-2 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                className="text-sm
+                bg-blue-500 text-white px-4 py-2 rounded-md
+                "
+                onClick={() => {
+                  setFacilityOptions([...facilityOptions, facilityInput]);
+                  setFacilityInput("");
+                }}
+              >
+                Add
+              </button>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description *</label>
-            <textarea
-              required
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            <CustomRichTextEditor
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(value) =>
+                setFormData({ ...formData, description: value })
+              }
+              className="mt-1 block w-full rounded-md border-gray-500 shadow p-2 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Images * (Max 6 images)
+              Images * (Min 5, Max 6 images)
             </label>
             <input
               type="file"
@@ -286,7 +461,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-300"
             >
-              {isSubmitting ? 'Adding...' : 'Add Hotel'}
+              {isSubmitting ? "Adding..." : "Add Hotel"}
             </button>
           </div>
         </form>
