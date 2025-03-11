@@ -3,11 +3,13 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import AddHotel from './AddHotel';
 import EditHotel from './EditHotel';  
 import QuickPriceEdit from './QuickPriceEdit';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 const HotelList = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<HotelType | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<any | null>(null);
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +42,16 @@ const HotelList = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = async(hotel: any) => {
+  const handleDeleteClick = (hotel: any) => {
+    setSelectedHotel(hotel);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedHotel) return;
+    
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${hotel.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${selectedHotel.id}`, {
         method: 'DELETE',
         headers: {
           'ngrok-skip-browser-warning': '6941',
@@ -51,30 +60,11 @@ const HotelList = () => {
       if (!response.ok) {
         throw new Error('Failed to delete hotel');
       }
-      
-      // setHotels(data);
+      await fetchHotels();
+      setShowDeleteModal(false);
+      setSelectedHotel(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/`, {
-        headers: {
-          'ngrok-skip-browser-warning': '6941',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch hotels');
-      }
-      const data = await response.json();
-      setHotels(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -118,9 +108,9 @@ const HotelList = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Price/Night
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Suites
-              </th>
+              </th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -140,7 +130,7 @@ const HotelList = () => {
                     />
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">{hotel.type}</td>
+                {/* <td className="px-6 py-4 whitespace-nowrap">{hotel.type}</td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex space-x-2">
                     <button 
@@ -149,8 +139,10 @@ const HotelList = () => {
                     >
                       <Pencil className="h-5 w-5" />
                     </button>
-                    <button className="text-red-600 hover:text-red-800"
-                    onClick={() => handleDelete(hotel)}>
+                    <button 
+                      className="text-red-600 hover:text-red-800"
+                      onClick={() => handleDeleteClick(hotel)}
+                    >
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
@@ -169,6 +161,15 @@ const HotelList = () => {
           onComplete={handleEditComplete}
         />
       )}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedHotel(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        hotelName={selectedHotel?.name || ''}
+      />
     </div>
   );
 };

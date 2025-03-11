@@ -339,9 +339,9 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
               value={suiteTypeOptions.filter((option) =>
                 formData.type.includes(option.value)
               )}
-              onChange={(selectedOptions) => {
+              onChange={(selectedOptions: readonly { value: string; label: string }[]) => {
                 const selectedTypes = selectedOptions
-                  ? selectedOptions.map((option) => option.value)
+                  ? selectedOptions.map((option: { value: string; label: string }) => option.value)
                   : [];
                 setFormData({ ...formData, type: selectedTypes });
               }}

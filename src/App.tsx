@@ -11,8 +11,8 @@ function App() {
   const navigation = [
     { name: 'Hotels', icon: Building2, id: 'hotels' },
     { name: 'Bookings', icon: Hotel, id: 'bookings' },
-    { name: 'Users', icon: Users, id: 'users' },
-    { name: 'Settings', icon: Settings, id: 'settings' },
+    // { name: 'Users', icon: Users, id: 'users' },
+    // { name: 'Settings', icon: Settings, id: 'settings' },
   ];
 
   return (

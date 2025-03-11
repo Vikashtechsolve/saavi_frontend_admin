@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building } from 'lucide-react';
+import SaaviLogo from '../../public/assets/saavi_logo.jpeg';
 
 interface SidebarProps {
   navigation: {
@@ -16,8 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation, activeTab, setActiveTab }
     <div className="w-64 bg-white shadow-lg">
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <Building className="h-8 w-8 text-red-700" />
-          <span className="text-xl font-bold">Hotel Admin</span>
+          <img src={SaaviLogo} alt="Saavi Logo" className="w-12 h-10" />
+          <span className="text-xl font-bold">Saavi Admin</span>
         </div>
       </div>
       
