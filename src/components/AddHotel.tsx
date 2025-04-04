@@ -3,6 +3,14 @@ import { X } from "lucide-react";
 import Select from "react-select";
 import CustomRichTextEditor from "./CustomRichTextEditor";
 
+interface RatePlanType {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  price: number;
+}
+
 interface HotelType {
   name: string;
   city: string;
@@ -13,6 +21,8 @@ interface HotelType {
   type: string[];
   pricePerNight: number;
   facilities: string[];
+  amenities: string[];
+  ratePlans: RatePlanType[];
   imageFiles: File[];
   lastUpdated?: Date;
   userId?: string;
@@ -38,6 +48,8 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
     type: [],
     pricePerNight: 0,
     facilities: [],
+    amenities: [],
+    ratePlans: [],
     imageFiles: [],
     address: "",
     rating: "",
@@ -69,6 +81,37 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
     { value: "resort", label: "Resort" },
     { value: "boutique", label: "Boutique" },
   ];
+  const [amenityInput, setAmenityInput] = useState("");
+
+  const handleAddAmenity = () => {
+    if (amenityInput && !formData.amenities.includes(amenityInput)) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: [...prev.amenities, amenityInput]
+      }));
+      setAmenityInput("");
+    }
+  };
+  
+  const handleRemoveAmenity = (index: number) => {
+    const updated = [...formData.amenities];
+    updated.splice(index, 1);
+    setFormData(prev => ({ ...prev, amenities: updated }));
+  };
+  const [ratePlan, setRatePlan] = useState<RatePlanType>({
+    id: "",
+    name: "",
+    code: "",
+    description: "",
+    price: 0,
+  });
+
+  
+  const handleRemoveRatePlan = (index: number) => {
+    const updated = [...formData.ratePlans];
+    updated.splice(index, 1);
+    setFormData(prev => ({ ...prev, ratePlans: updated }));
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -126,7 +169,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
       formDataToSend.append("hotelId", uniqueHotelId);
 
       Object.entries(formData).forEach(([key, value]) => {
-        if ((key === "facilities" || key === "type")) {
+        if  (["facilities", "type", "amenities", "ratePlans"].includes(key)) {
           // Handle arrays properly
           formDataToSend.append(key, JSON.stringify(value));
         } else {
@@ -406,7 +449,140 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
               </button>
             </div>
           </div>
+          
+          {/* Amenities */}
+<div className="mt-6">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Amenities *
+  </label>
+  <div className="flex gap-2 mb-3">
+    <input
+      type="text"
+      value={amenityInput}
+      onChange={(e) => setAmenityInput(e.target.value)}
+      placeholder="Enter amenity"
+      className="flex-1 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <button
+      type="button"
+      onClick={handleAddAmenity}
+      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+    >
+      Add
+    </button>
+  </div>
 
+  {/* Display Amenities */}
+  {formData.amenities.length > 0 && (
+    <div className="space-y-2">
+      {formData.amenities.map((amenity, index) => (
+        <div
+          key={index}
+          className="flex items-center justify-between border p-3 rounded-md bg-gray-50 shadow-sm"
+        >
+          <span className="text-sm text-gray-800">{amenity}</span>
+          <button
+            type="button"
+            onClick={() => handleRemoveAmenity(index)}
+            className="text-red-500 hover:text-red-700 text-xl"
+            title="Remove Amenity"
+          >
+            ❌
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+
+{/* Rate Plans */}
+
+<div className="mb-4">
+
+  <h3 className="font-semibold mb-2">Add Rate Plan</h3>
+  <input
+  className="border p-2 mb-2 w-full"
+  value={ratePlan.id}
+  onChange={(e) => setRatePlan({ ...ratePlan, id: e.target.value })}
+  placeholder="Plan ID"
+/>
+  <input
+    className="border p-2 mb-2 w-full"
+    value={ratePlan.name}
+    onChange={(e) => setRatePlan({ ...ratePlan, name: e.target.value })}
+    placeholder="Plan Name"
+  />
+  <input
+    className="border p-2 mb-2 w-full"
+    value={ratePlan.code}
+    onChange={(e) => setRatePlan({ ...ratePlan, code: e.target.value })}
+    placeholder="Plan Code"
+  />
+  <input
+    className="border p-2 mb-2 w-full"
+    value={ratePlan.description}
+    onChange={(e) => setRatePlan({ ...ratePlan, description: e.target.value })}
+    placeholder="Plan Description"
+  />
+  <input
+    className="border p-2 mb-2 w-full"
+    type="number"
+    value={ratePlan.price}
+    onChange={(e) =>
+      setRatePlan({ ...ratePlan, price: parseFloat(e.target.value) })
+    }
+    placeholder="Plan Price"
+  />
+  <button
+    type="button"
+    className="bg-blue-500 text-white px-4 py-2 rounded"
+    onClick={() => {
+      if (ratePlan.name && ratePlan.code && ratePlan.description && ratePlan.price > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          ratePlans: [...prev.ratePlans, ratePlan],
+        }));
+        setRatePlan({
+          id: "",
+          name: "",
+          code: "",
+          description: "",
+          price: 0,
+        });
+      }
+    }}
+  >
+    Add Rate Plan
+  </button>
+</div>
+{formData.ratePlans.length > 0 && (
+  <div className="mt-4">
+    <h3 className="text-lg font-semibold mb-2">Rate Plans</h3>
+    <div className="space-y-2">
+      {formData.ratePlans.map((plan, index) => (
+        <div
+          key={plan.id}
+          className="flex justify-between items-center border p-3 rounded-md bg-gray-50 shadow-sm"
+        >
+          <div>
+            <p className="font-medium">{plan.name} ({plan.code})</p>
+            <p className="text-sm text-gray-600">{plan.description}</p>
+            <p className="text-sm text-green-600 font-semibold">₹ {plan.price}</p>
+            <p className="text-xs text-gray-400">ID: {plan.id}</p>
+          </div>
+          <button
+            className="text-red-500 hover:text-red-700 text-xl"
+            onClick={() => handleRemoveRatePlan(index)}
+            title="Remove Rate Plan"
+          >
+            ❌
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
           <div>
             <CustomRichTextEditor
               value={formData.description}
