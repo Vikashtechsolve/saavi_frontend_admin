@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Phone, Mail, Users, Building2, ExternalLink } from 'lucide-react';
+import { Calendar, Mail, Users, Building2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import BookingDetailsModal from './BookingDetailsModal';
 
 interface Booking {
@@ -19,30 +19,37 @@ interface Booking {
   promoCode?: string;
 }
 
+const LIMIT = 10;
+
 const UserBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true); // If there's another page
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [page]);
 
   const fetchBookings = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bookings`, {
-        headers: {
-          'ngrok-skip-browser-warning': '6941',
-        },
-      });
-      
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/bookings?limit=${LIMIT}&page=${page}`,
+        {
+          headers: { 'ngrok-skip-browser-warning': '6941' },
+        }
+      );
+
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
       }
-      
+
       const bookingData = await response.json();
-      setBookings(bookingData.data);
+      setBookings(bookingData.data || []);
+      setHasMore((bookingData.data || []).length === LIMIT); // If less than LIMIT, no more pages
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -50,41 +57,51 @@ const UserBookings = () => {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Loading bookings...</div>;
-  }
+  const handlePrev = () => {
+    if (page > 1) setPage((prev) => prev - 1);
+  };
 
-  if (error) {
-    return <div className="text-center py-8 text-red-600">{error}</div>;
-  }
+  const handleNext = () => {
+    if (hasMore) setPage((prev) => prev + 1);
+  };
+
+  if (loading) return <div className="text-center py-8">Loading bookings...</div>;
+  if (error) return <div className="text-center py-8 text-red-600">{error}</div>;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">User Bookings</h1>
-      
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">User Bookings</h1>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handlePrev}
+            disabled={page === 1}
+            className={`p-1 rounded-full ${page === 1 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <span className="text-sm text-gray-600">Page {page}</span>
+          <button
+            onClick={handleNext}
+            disabled={!hasMore}
+            className={`p-1 rounded-full ${!hasMore ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'}`}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Guest Details
-                </th>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking Details
-                </th>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
-                </th>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Room Info
-                </th>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cost
-                </th>
-                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Guest Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dates</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room Info</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -109,13 +126,9 @@ const UserBookings = () => {
                         <Building2 className="h-4 w-4 mr-1 text-gray-500" />
                         {booking.destination}
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        Type: {booking.type}
-                      </div>
+                      <div className="text-sm text-gray-500 mt-1">Type: {booking.type}</div>
                       {booking.promoCode && (
-                        <div className="text-sm text-green-600 mt-1">
-                          Promo: {booking.promoCode}
-                        </div>
+                        <div className="text-sm text-green-600 mt-1">Promo: {booking.promoCode}</div>
                       )}
                     </div>
                   </td>
@@ -135,9 +148,7 @@ const UserBookings = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-medium">
-                      ₹{booking.cost.toLocaleString()}
-                    </span>
+                    <span className="font-medium">₹{booking.cost.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
                     <button
@@ -166,4 +177,3 @@ const UserBookings = () => {
 };
 
 export default UserBookings;
-
