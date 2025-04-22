@@ -3,12 +3,17 @@ import { X } from "lucide-react";
 import Select from "react-select";
 import CustomRichTextEditor from "./CustomRichTextEditor";
 
-interface RatePlanType {
+interface RatePlan {
   id: string;
   name: string;
-  code: string;
-  description: string;
   price: number;
+}
+
+interface Room {
+  type: string;
+  description: string;
+  minPrice: number;
+  plans: RatePlan[];
 }
 
 interface HotelType {
@@ -22,7 +27,7 @@ interface HotelType {
   pricePerNight: number;
   facilities: string[];
   amenities: string[];
-  ratePlans: RatePlanType[];
+  rooms: Room[];
   imageFiles: File[];
   lastUpdated?: Date;
   userId?: string;
@@ -49,7 +54,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
     pricePerNight: 0,
     facilities: [],
     amenities: [],
-    ratePlans: [],
+    rooms: [] as Room[],
     imageFiles: [],
     address: "",
     rating: "",
@@ -81,6 +86,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
     { value: "resort", label: "Resort" },
     { value: "boutique", label: "Boutique" },
   ];
+
   const [amenityInput, setAmenityInput] = useState("");
 
   const handleAddAmenity = () => {
@@ -92,26 +98,49 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
       setAmenityInput("");
     }
   };
-  
+
+
   const handleRemoveAmenity = (index: number) => {
     const updated = [...formData.amenities];
     updated.splice(index, 1);
     setFormData(prev => ({ ...prev, amenities: updated }));
   };
-  const [ratePlan, setRatePlan] = useState<RatePlanType>({
-    id: "",
-    name: "",
-    code: "",
-    description: "",
-    price: 0,
-  });
 
-  
-  const handleRemoveRatePlan = (index: number) => {
-    const updated = [...formData.ratePlans];
-    updated.splice(index, 1);
-    setFormData(prev => ({ ...prev, ratePlans: updated }));
-  };
+ 
+
+  const [rooms, setRooms] = useState([
+    {
+      type: "Standard Room",
+      description: "",
+      minPrice: 0,
+      plans: [
+        { id: "EP", name: "Room Only", price: 0 },
+        { id: "CP", name: "Breakfast Included", price: 0 },
+        { id: "MAP", name: "Breakfast and 1 Major Meal Included", price: 0 }
+      ]
+    },
+    {
+      type: "Deluxe Room",
+      description: "",
+      minPrice: 0,
+      plans: [
+        { id: "EP", name: "Room Only", price: 0 },
+        { id: "CP", name: "Breakfast Included", price: 0 },
+        { id: "MAP", name: "Breakfast and 1 Major Meal Included", price: 0 }
+      ]
+    },
+    {
+      type: "Presidential Room",
+      description: "",
+      minPrice: 0,
+      plans: [
+        { id: "EP", name: "Room Only", price: 0 },
+        { id: "CP", name: "Breakfast Included", price: 0 },
+        { id: "MAP", name: "Breakfast and 1 Major Meal Included", price: 0 }
+      ]
+    }
+  ]);
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -157,6 +186,8 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
     try {
       const formDataToSend = new FormData();
 
+      console.log("formmmmm dataaaaa",formData);
+
       // Generate a unique hotelId using timestamp + random string
       const timestamp = new Date().getTime().toString(36);
       const randomPart = Array(8)
@@ -167,9 +198,12 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
 
       // Add hotelId to formData
       formDataToSend.append("hotelId", uniqueHotelId);
-
-      Object.entries(formData).forEach(([key, value]) => {
-        if  (["facilities", "type", "amenities", "ratePlans"].includes(key)) {
+      const finalFormData = {
+        ...formData,
+        rooms: rooms, // <-- Injecting your predefined rooms array here
+      };
+      Object.entries(finalFormData).forEach(([key, value]) => {
+        if  (["facilities", "type", "amenities", "rooms"].includes(key)) {
           // Handle arrays properly
           formDataToSend.append(key, JSON.stringify(value));
         } else {
@@ -185,7 +219,7 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
         formDataToSend.append("imageFiles", file);
       });
 
-      console.log(formDataToSend);
+      console.log("formDataaaaaaaa",formDataToSend);
 
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/hotels/add-hotel`,
@@ -498,33 +532,48 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
 
 {/* Rate Plans */}
 
-<div className="mb-4">
+{/* <div className="mb-4">
 
   <h3 className="font-semibold mb-2">Add Rate Plan</h3>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan ID *
+            </label>
   <input
   className="border p-2 mb-2 w-full"
   value={ratePlan.id}
   onChange={(e) => setRatePlan({ ...ratePlan, id: e.target.value })}
-  placeholder="Plan ID"
+  placeholder="ep,cp,map"
 />
-  <input
-    className="border p-2 mb-2 w-full"
-    value={ratePlan.name}
-    onChange={(e) => setRatePlan({ ...ratePlan, name: e.target.value })}
-    placeholder="Plan Name"
-  />
+<label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan Code *
+            </label>
   <input
     className="border p-2 mb-2 w-full"
     value={ratePlan.code}
     onChange={(e) => setRatePlan({ ...ratePlan, code: e.target.value })}
-    placeholder="Plan Code"
+    placeholder="EP,CP,MAP"
   />
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan Name *
+            </label>
+  <input
+    className="border p-2 mb-2 w-full"
+    value={ratePlan.name}
+    onChange={(e) => setRatePlan({ ...ratePlan, name: e.target.value })}
+    placeholder="Room Only"
+  />
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan Description *
+            </label>
   <input
     className="border p-2 mb-2 w-full"
     value={ratePlan.description}
     onChange={(e) => setRatePlan({ ...ratePlan, description: e.target.value })}
     placeholder="Plan Description"
   />
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan Price *
+            </label>
   <input
     className="border p-2 mb-2 w-full"
     type="number"
@@ -555,34 +604,81 @@ const AddHotel: React.FC<AddHotelProps> = ({ onClose, onComplete }) => {
   >
     Add Rate Plan
   </button>
-</div>
-{formData.ratePlans.length > 0 && (
-  <div className="mt-4">
-    <h3 className="text-lg font-semibold mb-2">Rate Plans</h3>
-    <div className="space-y-2">
-      {formData.ratePlans.map((plan, index) => (
-        <div
-          key={plan.id}
-          className="flex justify-between items-center border p-3 rounded-md bg-gray-50 shadow-sm"
-        >
-          <div>
-            <p className="font-medium">{plan.name} ({plan.code})</p>
-            <p className="text-sm text-gray-600">{plan.description}</p>
-            <p className="text-sm text-green-600 font-semibold">₹ {plan.price}</p>
-            <p className="text-xs text-gray-400">ID: {plan.id}</p>
-          </div>
-          <button
-            className="text-red-500 hover:text-red-700 text-xl"
-            onClick={() => handleRemoveRatePlan(index)}
-            title="Remove Rate Plan"
-          >
-            ❌
-          </button>
-        </div>
-      ))}
-    </div>
+</div> */}
+
+<div className="">
+{rooms.map((room, roomIndex) => (
+  <div key={roomIndex}>
+    <h3 className="font-semibold mb-2 mt-8">{room.type}</h3>
+
+    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+    <input
+      className="border p-2 mb-2 w-full"
+      value={room.description}
+      onChange={(e) => {
+        const updatedRooms = [...rooms];
+        updatedRooms[roomIndex].description = e.target.value;
+        setRooms(updatedRooms);
+      }}
+      placeholder="Plan Description"
+    />
+
+    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Price *</label>
+    <input
+      type="number"
+      className="border p-2 mb-2 w-full"
+      value={room.minPrice}
+      onChange={(e) => {
+        const updatedRooms = [...rooms];
+        updatedRooms[roomIndex].minPrice = parseFloat(e.target.value);
+        setRooms(updatedRooms);
+      }}
+      placeholder="Price"
+    />
+
+    <h3 className="font-semibold mb-2">Rate Plans</h3>
+
+    {room.plans.map((plan, planIndex) => (
+      <div key={planIndex}>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Plan ID *</label>
+        <input
+          className="border p-2 mb-2 w-full"
+          value={plan.id}
+          readOnly
+        />
+
+        <label className="block text-sm font-medium text-gray-700 mb-2">Plan Name *</label>
+        <input
+          className="border p-2 mb-2 w-full"
+          value={plan.name}
+          onChange={(e) => {
+            const updatedRooms = [...rooms];
+            updatedRooms[roomIndex].plans[planIndex].name = e.target.value;
+            setRooms(updatedRooms);
+          }}
+          placeholder="Room Only"
+        />
+
+        <label className="block text-sm font-medium text-gray-700 mb-2">Plan Price *</label>
+        <input
+          type="number"
+          className="border p-2 mb-4 w-full"
+          value={plan.price}
+          onChange={(e) => {
+            const updatedRooms = [...rooms];
+            updatedRooms[roomIndex].plans[planIndex].price = parseFloat(e.target.value);
+            setRooms(updatedRooms);
+          }}
+          placeholder="Plan Price"
+        />
+      </div>
+    ))}
   </div>
-)}
+))}
+
+    </div>
+
+    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
           <div>
             <CustomRichTextEditor
               value={formData.description}

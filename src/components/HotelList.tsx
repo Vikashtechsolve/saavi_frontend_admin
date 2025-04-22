@@ -38,6 +38,8 @@ const HotelList = () => {
   };
 
   const handleEdit = (hotel: any) => {
+    console.log("Hotelssss",hotel);
+    
     setSelectedHotel(hotel);
     setShowEditModal(true);
   };
